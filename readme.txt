@@ -4,7 +4,7 @@ Tags: chat, chatbot, ai, openai, assistant
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,9 @@ It says so and offers to hand the question to a person. The system prompt forbid
 Yes, in a local table, with a retention setting (30 days by default) and no raw IP addresses — only a salted hash for rate limiting.
 
 == Changelog ==
+
+= 0.1.1 =
+* Fix: Max answer length is now a visible setting, and a missing value falls back to 500 instead of sending 0 to the provider.
 
 = 0.1.0 =
 * First release: widget, retrieval over pages and posts, three providers, encrypted key storage, transcripts, rate limits.

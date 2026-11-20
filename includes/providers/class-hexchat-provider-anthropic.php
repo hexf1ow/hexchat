@@ -62,7 +62,7 @@ class HexChat_Provider_Anthropic extends HexChat_Provider {
 				'model'       => $model,
 				'system'      => $system,
 				'messages'    => $messages,
-				'max_tokens'  => (int) hexchat_opt( 'max_tokens' ),
+				'max_tokens'  => hexchat_num( 'max_tokens', 60 ),
 				'temperature' => (float) hexchat_opt( 'temperature' ),
 			)
 		);

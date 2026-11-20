@@ -67,7 +67,7 @@ class HexChat_Provider_OpenAI extends HexChat_Provider {
 			'model'       => $this->model,
 			'messages'    => $messages,
 			'temperature' => (float) hexchat_opt( 'temperature' ),
-			'max_tokens'  => (int) hexchat_opt( 'max_tokens' ),
+			'max_tokens'  => hexchat_num( 'max_tokens', 60 ),
 		);
 
 		$data = $this->post(

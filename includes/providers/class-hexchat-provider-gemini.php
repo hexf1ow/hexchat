@@ -56,7 +56,7 @@ class HexChat_Provider_Gemini extends HexChat_Provider {
 				'contents'          => $contents,
 				'generationConfig'  => array(
 					'temperature'     => (float) hexchat_opt( 'temperature' ),
-					'maxOutputTokens' => (int) hexchat_opt( 'max_tokens' ),
+					'maxOutputTokens' => hexchat_num( 'max_tokens', 60 ),
 				),
 			)
 		);

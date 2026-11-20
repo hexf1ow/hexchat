@@ -3,7 +3,7 @@
  * Plugin Name:       HexChat
  * Plugin URI:        https://github.com/hexf1ow/hexchat
  * Description:       AI chat widget for WordPress. Free, open source, bring your own API key. Answers from your own site content and hands over to a human when it is unsure.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Hex Flow
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HEXCHAT_VERSION', '0.1.0' );
+define( 'HEXCHAT_VERSION', '0.1.1' );
 define( 'HEXCHAT_FILE', __FILE__ );
 define( 'HEXCHAT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HEXCHAT_URL', plugin_dir_url( __FILE__ ) );
@@ -73,6 +73,28 @@ function hexchat_opt( $key ) {
 		return $defaults[ $key ];
 	}
 	return $value;
+}
+
+/**
+ * Read a numeric option with a floor, falling back to the shipped default.
+ *
+ * WordPress writes an empty string for any registered option that is missing
+ * from the submitted form, so a value can legitimately arrive as 0. Treating
+ * that as "use the default" keeps a mis-saved screen from breaking the chat.
+ *
+ * @param string $key Option key without the hexchat_ prefix.
+ * @param int    $min Lowest acceptable value.
+ * @return int
+ */
+function hexchat_num( $key, $min = 1 ) {
+	$value    = (int) hexchat_opt( $key );
+	$defaults = hexchat_defaults();
+
+	if ( $value < $min ) {
+		$value = isset( $defaults[ $key ] ) ? (int) $defaults[ $key ] : $min;
+	}
+
+	return ( $value < $min ) ? $min : $value;
 }
 
 /**

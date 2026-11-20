@@ -258,6 +258,8 @@ class HexChat_Settings {
 							<p class="hexchat-hint"><?php esc_html_e( 'These caps protect your API bill. 0 disables the cap.', 'hexchat' ); ?></p>
 						</div>
 						<div class="hexchat-col">
+							<label for="hexchat_max_tokens"><strong><?php esc_html_e( 'Max answer length (tokens)', 'hexchat' ); ?></strong></label>
+							<input type="number" min="60" id="hexchat_max_tokens" name="hexchat_max_tokens" value="<?php echo esc_attr( hexchat_opt( 'max_tokens' ) ); ?>" />
 							<label for="hexchat_max_message"><strong><?php esc_html_e( 'Longest message (characters)', 'hexchat' ); ?></strong></label>
 							<input type="number" min="200" id="hexchat_max_message" name="hexchat_max_message" value="<?php echo esc_attr( hexchat_opt( 'max_message' ) ); ?>" />
 							<label for="hexchat_retention_days"><strong><?php esc_html_e( 'Keep transcripts for (days)', 'hexchat' ); ?></strong></label>
