@@ -4,6 +4,8 @@ An AI chat widget for WordPress that answers from **your own pages** — free, o
 
 No account with us. No proxy. No subscription. You paste a key from OpenAI, OpenRouter, Groq, Ollama, Anthropic or Gemini, and the plugin talks to that provider directly.
 
+![HexChat widget](docs/screenshot-chat.png)
+
 ## Why it exists
 
 Most chat plugins are either a canned-question box dressed up as AI, or a paid SaaS that owns your traffic. HexChat is a plain WordPress plugin: your content, your key, your database, your data.
