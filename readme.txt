@@ -4,7 +4,7 @@ Tags: chat, chatbot, ai, openai, assistant
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.2.3
+Stable tag: 0.3.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,11 @@ It says so and offers to hand the question to a person. The system prompt forbid
 Yes, in a local table, with a retention setting (30 days by default) and no raw IP addresses — only a salted hash for rate limiting.
 
 == Changelog ==
+
+= 0.3.0 =
+* Guidance-first replies: the assistant answers naturally from the site and declines unrelated questions softly in its own words, instead of a fixed refusal.
+* Behaviour rules now live in the plugin, so improving them needs no settings change.
+* Strict knowledge wall kept as an experimental switch in Settings (off by default).
 
 = 0.2.3 =
 * Fix: "Hi", "hi there", "good morning" and "thanks" get a real reply instead of the knowledge-wall refusal. Greetings are answered directly and cost no API call.

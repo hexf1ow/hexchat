@@ -86,6 +86,7 @@ class HexChat_Settings {
 			'retention_days' => 'int',
 			'brand_colour'   => 'text',
 			'position'       => 'text',
+			'strict_wall'    => 'int',
 		);
 
 		foreach ( $fields as $name => $type ) {
@@ -281,6 +282,9 @@ class HexChat_Settings {
 							<input type="number" min="200" id="hexchat_max_message" name="hexchat_max_message" value="<?php echo esc_attr( hexchat_opt( 'max_message' ) ); ?>" />
 							<label for="hexchat_retention_days"><strong><?php esc_html_e( 'Keep transcripts for (days)', 'hexchat' ); ?></strong></label>
 							<input type="number" min="1" id="hexchat_retention_days" name="hexchat_retention_days" value="<?php echo esc_attr( hexchat_opt( 'retention_days' ) ); ?>" />
+							<input type="hidden" name="hexchat_strict_wall" value="0" />
+							<p><label><input type="checkbox" name="hexchat_strict_wall" value="1" <?php checked( (string) get_option( 'hexchat_strict_wall', '0' ), '1' ); ?> /> <strong><?php esc_html_e( 'Strict knowledge wall (experimental)', 'hexchat' ); ?></strong></label></p>
+							<p class="hexchat-hint"><?php esc_html_e( 'Off is recommended. Off: the assistant answers naturally and politely declines anything unrelated. On: any reply that reuses too little of the site wording is replaced by a fixed refusal — stricter, but it also refuses greetings and some legitimate paraphrases.', 'hexchat' ); ?></p>
 							<label for="hexchat_handover_email"><strong><?php esc_html_e( 'Handover email', 'hexchat' ); ?></strong></label>
 							<input type="text" id="hexchat_handover_email" name="hexchat_handover_email" value="<?php echo esc_attr( hexchat_opt( 'handover_email' ) ); ?>" placeholder="info@example.com" />
 						</div>
