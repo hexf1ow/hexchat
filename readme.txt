@@ -4,7 +4,7 @@ Tags: chat, chatbot, ai, openai, assistant
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.3.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,10 @@ It says so and offers to hand the question to a person. The system prompt forbid
 Yes, in a local table, with a retention setting (30 days by default) and no raw IP addresses — only a salted hash for rate limiting.
 
 == Changelog ==
+
+= 0.3.2 =
+* Warmer greetings, scoped to what the business does, how it works and what it costs.
+* Off-topic declines rotate through five different shapes, so no two refusals read the same.
 
 = 0.3.0 =
 * Guidance-first replies: the assistant answers naturally from the site and declines unrelated questions softly in its own words, instead of a fixed refusal.
