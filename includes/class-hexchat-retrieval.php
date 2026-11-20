@@ -197,6 +197,80 @@ class HexChat_Retrieval {
 	}
 
 	/**
+	 * Does this reply actually draw on the passages we retrieved?
+	 *
+	 * Each content word in the answer is looked up in the retrieved text plus the
+	 * question and the system-level vocabulary. If too many words are foreign to
+	 * everything the site says, the answer came from the model's own knowledge
+	 * and must not reach the visitor.
+	 *
+	 * @param string $answer   Model reply.
+	 * @param array  $passages Scored passages used for the reply.
+	 * @param float  $min_ratio Minimum share of answer words found in the sources.
+	 * @return bool
+	 */
+	public static function is_grounded( $answer, array $passages, $min_ratio = 0.55 ) {
+		$answer = trim( wp_strip_all_tags( (string) $answer ) );
+		if ( '' === $answer ) {
+			return false;
+		}
+
+		$vocab = array();
+
+		foreach ( $passages as $passage ) {
+			foreach ( array_keys( (array) $passage['terms'] ) as $term ) {
+				$vocab[ $term ] = true;
+			}
+		}
+
+		// Words a grounded answer may legitimately add: courtesy, connectives, names of the site itself.
+		$allowed = array_flip(
+			array_merge(
+				self::stopwords(),
+				array(
+					'yes', 'no', 'okay', 'ok', 'sure', 'thanks', 'thank', 'happy', 'help', 'helps', 'happy', 'sorry',
+					'hex', 'flow', 'chat', 'assistant', 'sorry', 'please', 'team', 'person', 'someone', 'question',
+					'answer', 'information', 'details', 'site', 'website', 'page', 'contact', 'email', 'call',
+					'offer', 'offers', 'offerings', 'provide', 'provides', 'service', 'services', 'work', 'works',
+				)
+			)
+		);
+
+		$words = self::terms( $answer );
+		if ( empty( $words ) ) {
+			return false;
+		}
+
+		$hits  = 0;
+		$total = 0;
+
+		foreach ( $words as $word ) {
+			$total++;
+			if ( isset( $vocab[ $word ] ) || isset( $allowed[ $word ] ) ) {
+				$hits++;
+				continue;
+			}
+
+			// Allow a simple plural/verb-form difference: report/reporting, price/prices.
+			$stem = preg_replace( '/(ing|ed|es|s)$/', '', $word );
+			if ( strlen( $stem ) > 3 ) {
+				foreach ( array_keys( $vocab ) as $known ) {
+					if ( $known === $stem || 0 === strpos( $known, $stem ) ) {
+						$hits++;
+						break;
+					}
+				}
+			}
+		}
+
+		if ( 0 === $total ) {
+			return false;
+		}
+
+		return ( $hits / $total ) >= (float) $min_ratio;
+	}
+
+	/**
 	 * Build the context block handed to the model.
 	 *
 	 * @param array $passages Scored passages.

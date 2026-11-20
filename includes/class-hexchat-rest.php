@@ -124,15 +124,55 @@ class HexChat_Rest {
 		$passages             = HexChat_Retrieval::search( $message, 4 );
 		list( $context, $src ) = HexChat_Retrieval::context( $passages );
 
-		$system = (string) hexchat_opt( 'system_prompt' );
+		$history = HexChat_Store::history( $session, 8 );
 
-		if ( '' !== $context ) {
-			$system .= "\n\nSITE: " . home_url() . "\n\nCONTEXT (answer from this, nothing else):\n" . $context;
-		} else {
-			$system .= "\n\nNo matching content was found on this site for the question. Say you are not certain and offer to pass it to a person.";
+		/*
+		 * THE WALL.
+		 *
+		 * If retrieval finds nothing on this site for the question, the model is
+		 * never called. No API spend, no chance of the model answering from its
+		 * own general knowledge, no clever phrasing getting past the prompt.
+		 * The visitor gets a fixed refusal plus the handover route instead.
+		 */
+		if ( '' === $context ) {
+			$refusal = (string) hexchat_opt( 'no_answer_text' );
+			if ( '' === $refusal ) {
+				$refusal = __( 'I can only answer from what is written on this website, and I could not find anything here about that. I have not passed this to anyone yet — if you leave the question with our team they can help.', 'hexchat' );
+			}
+
+			HexChat_Store::add(
+				array(
+					'session_key' => $session,
+					'role'        => 'user',
+					'message'     => $message,
+					'ip_hash'     => $ip_hash,
+				)
+			);
+
+			HexChat_Store::add(
+				array(
+					'session_key' => $session,
+					'role'        => 'assistant',
+					'message'     => $refusal,
+					'escalated'   => 1,
+					'ip_hash'     => $ip_hash,
+				)
+			);
+
+			return new WP_REST_Response(
+				array(
+					'session'   => $session,
+					'reply'     => $refusal,
+					'sources'   => array(),
+					'escalated' => true,
+					'blocked'   => 'no_context',
+				),
+				200
+			);
 		}
 
-		$history = HexChat_Store::history( $session, 8 );
+		$system = (string) hexchat_opt( 'system_prompt' );
+		$system .= "\n\nSITE: " . home_url() . "\n\nCONTEXT (answer from this, nothing else):\n" . $context;
 
 		$answer = $provider->complete( $system, $history, $message );
 
@@ -147,6 +187,48 @@ class HexChat_Rest {
 			);
 
 			return $answer;
+		}
+
+		/*
+		 * Second half of the wall: the reply must actually be made of words the
+		 * site uses. A model that ignores its instructions and answers from
+		 * general knowledge fails this check, and the text is discarded.
+		 */
+		if ( ! HexChat_Retrieval::is_grounded( $answer, $passages, 0.55 ) ) {
+			$refusal = (string) hexchat_opt( 'no_answer_text' );
+			if ( '' === $refusal ) {
+				$refusal = __( 'I can only answer from what is written on this website, and I could not find anything here about that. I have not passed this to anyone yet — if you leave the question with our team they can help.', 'hexchat' );
+			}
+
+			HexChat_Store::add(
+				array(
+					'session_key' => $session,
+					'role'        => 'user',
+					'message'     => $message,
+					'ip_hash'     => $ip_hash,
+				)
+			);
+
+			HexChat_Store::add(
+				array(
+					'session_key' => $session,
+					'role'        => 'assistant',
+					'message'     => $refusal,
+					'escalated'   => 1,
+					'ip_hash'     => $ip_hash,
+				)
+			);
+
+			return new WP_REST_Response(
+				array(
+					'session'   => $session,
+					'reply'     => $refusal,
+					'sources'   => array(),
+					'escalated' => true,
+					'blocked'   => 'ungrounded',
+				),
+				200
+			);
 		}
 
 		$escalated = ( false !== stripos( $answer, 'pass this to a person' ) || false !== stripos( $answer, 'not sure' ) );
