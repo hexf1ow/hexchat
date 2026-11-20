@@ -121,7 +121,31 @@ class HexChat_Rest {
 		}
 
 		// Retrieve from this site's own content.
-		$passages             = HexChat_Retrieval::search( $message, 4 );
+		$passages = HexChat_Retrieval::search( $message, 4 );
+
+		/*
+		 * Nothing matched word-for-word. That is normal for broad questions
+		 * ("what type of company are you", "hi what do you guys do") because the
+		 * site never uses those exact words. Rather than dead-end the visitor,
+		 * hand the model the site's own introduction and let it answer from that.
+		 * The grounding check below still decides whether the reply survives.
+		 */
+		if ( empty( $passages ) ) {
+			$passages = HexChat_Retrieval::overview( 3 );
+		} else {
+			/*
+			 * Always keep the site's own introduction in the context. A question
+			 * like "what type of company are you" matches loose words in blog
+			 * posts, and without the homepage the answer goes vague.
+			 */
+			$have = wp_list_pluck( $passages, 'id' );
+			foreach ( HexChat_Retrieval::overview( 1 ) as $intro ) {
+				if ( ! in_array( $intro['id'], $have, true ) ) {
+					$passages[] = $intro;
+				}
+			}
+		}
+
 		list( $context, $src ) = HexChat_Retrieval::context( $passages );
 
 		$history = HexChat_Store::history( $session, 8 );
@@ -171,8 +195,11 @@ class HexChat_Rest {
 			);
 		}
 
-		$system = (string) hexchat_opt( 'system_prompt' );
-		$system .= "\n\nSITE: " . home_url() . "\n\nCONTEXT (answer from this, nothing else):\n" . $context;
+		$system  = (string) hexchat_opt( 'system_prompt' );
+		$system .= "\n\nSITE: " . home_url();
+		$system .= "\n\nCONTEXT (answer from this, nothing else):\n" . $context;
+		$system .= "\n\nIf the CONTEXT states a price, rate, fee or timeframe, you MUST quote it exactly as written and say which plan or package it belongs to. Never invent a figure, but never withhold one that is in the context either.";
+		$system .= "\n\nIf the question is about something this site does not cover, do not answer it from general knowledge. Say in one sentence that you can only help with what is on this site, name what the business does in plain words, and offer to pass the question to the team.";
 
 		$answer = $provider->complete( $system, $history, $message );
 

@@ -35,7 +35,37 @@ class HexChat_Retrieval {
 			'his', 'how', 'i', 'if', 'in', 'into', 'is', 'it', 'its', 'just', 'me', 'more', 'my', 'no', 'not', 'of', 'on',
 			'or', 'our', 'out', 'please', 'so', 'that', 'the', 'their', 'them', 'then', 'there', 'these', 'they', 'this',
 			'to', 'up', 'us', 'was', 'we', 'were', 'what', 'when', 'where', 'which', 'who', 'why', 'will', 'with', 'would', 'you', 'your',
+			'hi', 'hey', 'hello', 'guys', 'folks', 'mate', 'sir', 'there', 'ok', 'okay', 'yes', 'yeah', 'nah', 'thanks', 'thank',
+			'want', 'wanna', 'need', 'needed', 'know', 'tell', 'ask', 'asking', 'say', 'said', 'thing', 'things', 'kind', 'kinda',
 		);
+	}
+
+	/**
+	 * Crude stemmer. Deliberately tiny: it exists so "prices" matches "pricing"
+	 * and "reports" matches "reporting", which is the difference between the
+	 * chat finding the pricing page and telling the visitor it knows nothing.
+	 *
+	 * @param string $word Single lowercase word.
+	 * @return string
+	 */
+	private static function stem( $word ) {
+		$word = (string) $word;
+
+		if ( strlen( $word ) <= 4 ) {
+			return $word;
+		}
+
+		foreach ( array( 'ing', 'ies', 'ied', 'ed', 'es', 's' ) as $suffix ) {
+			$len = strlen( $suffix );
+			if ( substr( $word, -$len ) === $suffix ) {
+				$cut = substr( $word, 0, -$len );
+				if ( strlen( $cut ) >= 4 ) {
+					return $cut;
+				}
+			}
+		}
+
+		return $word;
 	}
 
 	/**
@@ -44,7 +74,7 @@ class HexChat_Retrieval {
 	 * @param string $text Text.
 	 * @return array
 	 */
-	private static function terms( $text ) {
+	public static function terms( $text ) {
 		$text = strtolower( wp_strip_all_tags( (string) $text ) );
 		$text = preg_replace( '/[^a-z0-9\s\-\']/u', ' ', $text );
 		$raw  = preg_split( '/\s+/', (string) $text, -1, PREG_SPLIT_NO_EMPTY );
@@ -56,7 +86,7 @@ class HexChat_Retrieval {
 			if ( strlen( $word ) < 2 || isset( $stop[ $word ] ) ) {
 				continue;
 			}
-			$out[] = $word;
+			$out[] = self::stem( $word );
 		}
 
 		return $out;
@@ -144,6 +174,94 @@ class HexChat_Retrieval {
 	}
 
 	/**
+	 * Every word the site actually uses, as a lookup set.
+	 *
+	 * @return array
+	 */
+	public static function vocabulary() {
+		$cached = get_transient( 'hexchat_vocab_v2' );
+		if ( is_array( $cached ) && ! empty( $cached ) ) {
+			return $cached;
+		}
+
+		$vocab = array();
+
+		foreach ( self::index() as $passage ) {
+			foreach ( array_keys( (array) $passage['terms'] ) as $term ) {
+				$vocab[ $term ] = true;
+			}
+		}
+
+		set_transient( 'hexchat_vocab_v2', $vocab, HOUR_IN_SECONDS * 6 );
+
+		return $vocab;
+	}
+
+	/**
+	 * How much of the question's vocabulary the site shares.
+	 *
+	 * Zero means the visitor is asking about something this site never mentions —
+	 * a genuine off-site question. Anything above zero means the subject exists
+	 * somewhere on the site, so it is safe to look for it.
+	 *
+	 * @param array $terms Question terms.
+	 * @return int
+	 */
+	public static function coverage( array $terms ) {
+		$vocab = self::vocabulary();
+		$hits  = 0;
+
+		foreach ( $terms as $term ) {
+			if ( isset( $vocab[ $term ] ) ) {
+				$hits++;
+			}
+		}
+
+		return $hits;
+	}
+
+	/**
+	 * The site's own introduction: home, services, solutions, about.
+	 *
+	 * Used when a visitor asks something as broad as "what do you guys do" —
+	 * a question with no searchable keywords but an obvious answer on the
+	 * homepage. This is still site content, so the wall applies afterwards.
+	 *
+	 * @param int $limit Passages to return.
+	 * @return array
+	 */
+	public static function overview( $limit = 3 ) {
+		$passages = self::index();
+		$picked   = array();
+		$home     = untrailingslashit( home_url() );
+
+		foreach ( $passages as $passage ) {
+			$url   = (string) $passage['url'];
+			$title = strtolower( (string) $passage['title'] );
+			$is_home = ( untrailingslashit( $url ) === $home || untrailingslashit( $url ) === $home . '/home' );
+
+			if ( $is_home || preg_match( '/service|solution|about|what we do|agent|industr/i', $title ) ) {
+				$picked[] = array( 'score' => $is_home ? 2 : 1 ) + $passage;
+				if ( count( $picked ) >= max( 1, (int) $limit ) ) {
+					break;
+				}
+			}
+		}
+
+		// No title matched and no obvious homepage: any real content beats a dead end.
+		if ( empty( $picked ) ) {
+			foreach ( $passages as $passage ) {
+				$picked[] = array( 'score' => 0.5 ) + $passage;
+				if ( count( $picked ) >= max( 1, (int) $limit ) ) {
+					break;
+				}
+			}
+		}
+
+		return $picked;
+	}
+
+	/**
 	 * Best passages for a question.
 	 *
 	 * @param string $question Visitor question.
@@ -156,7 +274,9 @@ class HexChat_Retrieval {
 			return array();
 		}
 
-		$q_terms = array_count_values( self::terms( $question ) );
+		$q_terms   = array_count_values( self::terms( $question ) );
+		$money_q   = (bool) preg_match( '/pric|cost|charg|fee|rate|quote|plan/i', $question );
+
 		if ( empty( $q_terms ) ) {
 			return array();
 		}
@@ -171,6 +291,16 @@ class HexChat_Retrieval {
 		foreach ( $passages as $passage ) {
 			$score = 0.0;
 
+			// A page titled "Pricing" must beat a blog post that happens to say
+			// "price" twice. Titles are the author's own summary of the page.
+			$title_terms = array_count_values( self::terms( (string) $passage['title'] ) );
+
+			foreach ( $title_terms as $term => $count ) {
+				if ( isset( $q_terms[ $term ] ) ) {
+					$score += 2.5 * $count * $q_terms[ $term ];
+				}
+			}
+
 			foreach ( $q_terms as $term => $weight ) {
 				if ( empty( $passage['terms'][ $term ] ) ) {
 					continue;
@@ -179,6 +309,11 @@ class HexChat_Retrieval {
 				$tf  = $passage['terms'][ $term ];
 				$idf = log( 1 + ( $total / ( 1 + $tf ) ) );
 				$score += $weight * $idf * ( ( $tf * ( $k1 + 1 ) ) / ( $tf + $k1 * ( 1 - $b + $b * ( $passage['len'] / $avg_len ) ) ) );
+			}
+
+			// Money questions need the passage that actually carries the figures.
+			if ( $money_q && preg_match( '/\$\s?\d/', (string) $passage['text'] ) ) {
+				$score += 2.0;
 			}
 
 			if ( $score > 0 ) {
