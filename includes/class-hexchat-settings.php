@@ -84,9 +84,11 @@ class HexChat_Settings {
 			'handover_email' => 'text',
 			'index_types'    => 'array',
 			'retention_days' => 'int',
-			'brand_colour'   => 'text',
+			'brand_colour'   => 'colour',
 			'position'       => 'text',
 			'strict_wall'    => 'int',
+			'logo_url'       => 'text',
+			'subtitle'       => 'text',
 		);
 
 		foreach ( $fields as $name => $type ) {
@@ -97,6 +99,8 @@ class HexChat_Settings {
 				$callback = static function ( $value ) {
 					return max( 0, min( 2, (float) $value ) );
 				};
+			} elseif ( 'colour' === $type ) {
+				$callback = 'hexchat_normalise_colour';
 			} elseif ( 'array' === $type ) {
 				$callback = static function ( $value ) {
 					return array_values( array_intersect( array_map( 'sanitize_key', (array) $value ), array( 'page', 'post' ) ) );
@@ -259,8 +263,14 @@ class HexChat_Settings {
 								<option value="left" <?php selected( hexchat_opt( 'position' ), 'left' ); ?>><?php esc_html_e( 'Bottom left', 'hexchat' ); ?></option>
 							</select>
 							<label for="hexchat_brand_colour"><strong><?php esc_html_e( 'Brand colour', 'hexchat' ); ?></strong></label>
-							<input type="text" id="hexchat_brand_colour" name="hexchat_brand_colour" value="<?php echo esc_attr( hexchat_opt( 'brand_colour' ) ); ?>" placeholder="#1f3864" />
-							<p class="hexchat-hint"><?php esc_html_e( 'Leave blank to inherit the theme’s colours.', 'hexchat' ); ?></p>
+							<input type="text" id="hexchat_brand_colour" name="hexchat_brand_colour" value="<?php echo esc_attr( hexchat_opt( 'brand_colour' ) ); ?>" placeholder="#ff6a00" />
+							<span id="hexchat-colour-swatch" style="display:inline-block;width:26px;height:26px;border-radius:6px;border:1px solid #c3c4c7;vertical-align:middle;background:<?php echo esc_attr( hexchat_normalise_colour( (string) hexchat_opt( 'brand_colour' ) ) ? hexchat_normalise_colour( (string) hexchat_opt( 'brand_colour' ) ) : '#1f3864' ); ?>"></span>
+							<p class="hexchat-hint"><?php esc_html_e( 'Hex value with or without the # — ff6a00, #ff6a00 and #f60 all work. Leave empty for the default navy.', 'hexchat' ); ?></p>
+							<script>
+							(function(){var i=document.getElementById('hexchat_brand_colour'),s=document.getElementById('hexchat-colour-swatch');
+							function u(){var v=(i.value||'').trim();if(!v){s.style.background='#1f3864';return;}if(v.charAt(0)!=='#')v='#'+v;if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)){s.style.background=v;}}
+							i.addEventListener('input',u);i.addEventListener('change',u);})();
+							</script>
 						</div>
 					</div>
 				</div>
@@ -280,11 +290,22 @@ class HexChat_Settings {
 							<input type="number" min="60" id="hexchat_max_tokens" name="hexchat_max_tokens" value="<?php echo esc_attr( hexchat_opt( 'max_tokens' ) ); ?>" />
 							<label for="hexchat_max_message"><strong><?php esc_html_e( 'Longest message (characters)', 'hexchat' ); ?></strong></label>
 							<input type="number" min="200" id="hexchat_max_message" name="hexchat_max_message" value="<?php echo esc_attr( hexchat_opt( 'max_message' ) ); ?>" />
+							<p><strong><?php esc_html_e( 'What to read for answers', 'hexchat' ); ?></strong></p>
+							<?php $types = (array) hexchat_opt( 'index_types' ); ?>
+							<p><label><input type="checkbox" name="hexchat_index_types[]" value="page" <?php checked( in_array( 'page', $types, true ) ); ?> /> <?php esc_html_e( 'Pages', 'hexchat' ); ?></label>
+							&nbsp;&nbsp;<label><input type="checkbox" name="hexchat_index_types[]" value="post" <?php checked( in_array( 'post', $types, true ) ); ?> /> <?php esc_html_e( 'Blog posts', 'hexchat' ); ?></label></p>
+							<p class="hexchat-hint"><?php esc_html_e( 'Save after changing this — the content index rebuilds on the next question.', 'hexchat' ); ?></p>
 							<label for="hexchat_retention_days"><strong><?php esc_html_e( 'Keep transcripts for (days)', 'hexchat' ); ?></strong></label>
 							<input type="number" min="1" id="hexchat_retention_days" name="hexchat_retention_days" value="<?php echo esc_attr( hexchat_opt( 'retention_days' ) ); ?>" />
 							<input type="hidden" name="hexchat_strict_wall" value="0" />
 							<p><label><input type="checkbox" name="hexchat_strict_wall" value="1" <?php checked( (string) get_option( 'hexchat_strict_wall', '0' ), '1' ); ?> /> <strong><?php esc_html_e( 'Strict knowledge wall (experimental)', 'hexchat' ); ?></strong></label></p>
 							<p class="hexchat-hint"><?php esc_html_e( 'Off is recommended. Off: the assistant answers naturally and politely declines anything unrelated. On: any reply that reuses too little of the site wording is replaced by a fixed refusal — stricter, but it also refuses greetings and some legitimate paraphrases.', 'hexchat' ); ?></p>
+							<label for="hexchat_logo_url"><strong><?php esc_html_e( 'Logo image URL', 'hexchat' ); ?></strong></label>
+							<input type="text" id="hexchat_logo_url" name="hexchat_logo_url" value="<?php echo esc_attr( hexchat_opt( 'logo_url' ) ); ?>" placeholder="<?php echo esc_attr( HEXCHAT_URL . 'assets/img/logo.png' ); ?>" />
+							<p class="hexchat-hint"><?php esc_html_e( 'Shown in the launcher button and the chat header. Leave empty to use the bundled Hex Flow robot mark.', 'hexchat' ); ?></p>
+							<label for="hexchat_subtitle"><strong><?php esc_html_e( 'Header subtitle', 'hexchat' ); ?></strong></label>
+							<input type="text" id="hexchat_subtitle" name="hexchat_subtitle" value="<?php echo esc_attr( hexchat_opt( 'subtitle' ) ); ?>" />
+							<p class="hexchat-hint"><?php esc_html_e( 'The small line under the chat title, e.g. "AI assistant · answers from this site".', 'hexchat' ); ?></p>
 							<label for="hexchat_handover_email"><strong><?php esc_html_e( 'Handover email', 'hexchat' ); ?></strong></label>
 							<input type="text" id="hexchat_handover_email" name="hexchat_handover_email" value="<?php echo esc_attr( hexchat_opt( 'handover_email' ) ); ?>" placeholder="info@example.com" />
 						</div>

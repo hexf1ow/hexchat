@@ -3,7 +3,7 @@
  * Plugin Name:       HexChat
  * Plugin URI:        https://github.com/hexf1ow/hexchat
  * Description:       AI chat widget for WordPress. Free, open source, bring your own API key. Answers from your own site content and hands over to a human when it is unsure.
- * Version:           0.3.2
+ * Version:           0.4.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Hex Flow
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HEXCHAT_VERSION', '0.3.2' );
+define( 'HEXCHAT_VERSION', '0.4.0' );
 define( 'HEXCHAT_FILE', __FILE__ );
 define( 'HEXCHAT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HEXCHAT_URL', plugin_dir_url( __FILE__ ) );
@@ -48,7 +48,7 @@ function hexchat_defaults() {
 		'max_tokens'     => 500,
 		'max_message'    => 1500,
 		'rate_limit'     => 20,
-		'greeting'       => 'Hi there 👋 Ask me anything about this site — I answer from its own content.',
+		'greeting'       => 'Hi! Ask me what we do, how it works, or what it costs — I answer from this site.',
 		'system_prompt'  => 'You are a helpful assistant for this website. Answer only from the CONTEXT provided. If the answer is not in the context, say you are not sure and offer to pass the question to a person. Never invent prices, phone numbers, addresses or legal claims. Keep answers under 90 words, plain English, no marketing padding.',
 		'handover_email' => '',
 		'strict_wall'    => 0,
@@ -58,6 +58,8 @@ function hexchat_defaults() {
 		'daily_cap'      => 200,
 		'retention_days' => 30,
 		'brand_colour'   => '',
+		'logo_url'       => '',
+		'subtitle'       => 'AI assistant · answers from this site',
 		'position'       => 'right',
 		'title'          => 'Chat with us',
 	);
@@ -135,8 +137,25 @@ function hexchat_activate() {
 			add_option( 'hexchat_' . $key, $value );
 		}
 	}
+	if ( ! wp_next_scheduled( 'hexchat_prune' ) ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'hexchat_prune' );
+	}
 }
 register_activation_hook( __FILE__, 'hexchat_activate' );
+
+/**
+ * Deactivation: clear the scheduled clean-up.
+ *
+ * @return void
+ */
+function hexchat_deactivate() {
+	$timestamp = wp_next_scheduled( 'hexchat_prune' );
+	if ( $timestamp ) {
+		wp_unschedule_event( $timestamp, 'hexchat_prune' );
+	}
+}
+register_deactivation_hook( __FILE__, 'hexchat_deactivate' );
+
 
 /**
  * Boot the plugin.
@@ -146,6 +165,14 @@ function hexchat_boot() {
 
 	HexChat_Settings::init();
 	HexChat_Rest::init();
+
+	add_action( 'hexchat_prune', 'hexchat_run_prune' );
+
+	// Self-heal the clean-up schedule: sites that updated instead of reactivating
+	// never ran the activation hook, so the event can be missing.
+	if ( ! wp_next_scheduled( 'hexchat_prune' ) ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'hexchat_prune' );
+	}
 
 	// Show the widget unless the owner has explicitly switched it off (value '0')
 	// and a key is saved. An empty/missing value means "on", because WordPress
@@ -161,11 +188,47 @@ add_action( 'plugins_loaded', 'hexchat_boot' );
 /**
  * Front-end assets.
  */
+/**
+ * Accept "#ff6a00", "ff6a00", "#f60" or "f60" and return a sanitised hex colour.
+ *
+ * @param string $value Raw setting value.
+ * @return string Empty string when the value is not a colour.
+ */
+function hexchat_normalise_colour( $value ) {
+	$value = trim( (string) $value );
+
+	if ( '' === $value ) {
+		return '';
+	}
+
+	if ( '#' !== substr( $value, 0, 1 ) ) {
+		$value = '#' . $value;
+	}
+
+	$hex = sanitize_hex_color( $value );
+
+	return $hex ? $hex : '';
+}
+
+/**
+ * Daily clean-up of old transcripts, honouring the retention setting.
+ *
+ * @return void
+ */
+function hexchat_run_prune() {
+	HexChat_Store::prune();
+}
+
 function hexchat_enqueue_widget() {
 	wp_enqueue_style( 'hexchat-widget', HEXCHAT_URL . 'assets/css/widget.css', array(), HEXCHAT_VERSION );
 	wp_enqueue_script( 'hexchat-widget', HEXCHAT_URL . 'assets/js/widget.js', array(), HEXCHAT_VERSION, true );
 
-	$brand = (string) hexchat_opt( 'brand_colour' );
+	$brand = hexchat_normalise_colour( (string) hexchat_opt( 'brand_colour' ) );
+
+	$logo = trim( (string) hexchat_opt( 'logo_url' ) );
+	if ( '' === $logo ) {
+		$logo = HEXCHAT_URL . 'assets/img/logo.png';
+	}
 
 	wp_localize_script(
 		'hexchat-widget',
@@ -177,7 +240,9 @@ function hexchat_enqueue_widget() {
 			'title'     => (string) hexchat_opt( 'title' ),
 			'greeting'  => (string) hexchat_opt( 'greeting' ),
 			'position'  => (string) hexchat_opt( 'position' ),
-			'brand'     => $brand ? sanitize_hex_color( $brand ) : '',
+			'brand'     => $brand,
+			'logo'      => esc_url_raw( $logo ),
+			'subtitle'  => (string) hexchat_opt( 'subtitle' ),
 			'handover'  => (string) hexchat_opt( 'handover_email' ),
 			'maxLength' => (int) hexchat_opt( 'max_message' ),
 		)

@@ -12,6 +12,13 @@
   var root = document.getElementById('hexchat-root');
   if (!CFG || !root || !CFG.endpoint) return;
 
+  function escapeAttr(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+
   var SESSION_KEY = 'hexchat_session';
   var state = { open: false, busy: false, session: '', messages: [] };
 
@@ -50,18 +57,22 @@
   wrap.className = 'hc-wrap';
   wrap.innerHTML = [
     '<button class="hc-launcher" type="button" aria-label="Open chat">',
-    '  <svg class="hc-icon-chat" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.9 3 3 6.6 3 11c0 2.2 1 4.2 2.6 5.6-.2 1.2-.8 2.4-1.7 3.3-.2.2 0 .6.3.6 2 0 3.8-.8 5-1.9 1 .3 2 .5 3.1.5 5.1 0 9-3.6 9-8s-3.9-8-8.3-8z"/></svg>',
+    (CFG.logo
+      ? '  <img class="hc-logo" src="' + escapeAttr(CFG.logo) + '" alt="" />'
+      : '  <svg class="hc-icon-chat" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.9 3 3 6.6 3 11c0 2.2 1 4.2 2.6 5.6-.2 1.2-.8 2.4-1.7 3.3-.2.2 0 .6.3.6 2 0 3.8-.8 5-1.9 1 .3 2 .5 3.1.5 5.1 0 9-3.6 9-8s-3.9-8-8.3-8z"/></svg>'),
     '  <svg class="hc-icon-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     '</button>',
     '<section class="hc-panel" role="dialog" aria-modal="false" aria-label="' + escapeAttr(CFG.title || 'Chat') + '">',
     '  <header class="hc-head">',
     '    <div class="hc-head-main">',
     '      <span class="hc-avatar" aria-hidden="true">',
-    '        <svg viewBox="0 0 24 24"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4z"/></svg>',
+    (CFG.logo
+      ? '        <img src="' + escapeAttr(CFG.logo) + '" alt="" />'
+      : '        <svg viewBox="0 0 24 24"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4z"/></svg>'),
     '      </span>',
     '      <div>',
     '        <strong class="hc-title"></strong>',
-    '        <span class="hc-status"><i></i> AI assistant · answers from this site</span>',
+            '        <span class="hc-status"><i></i> ' + escapeAttr(CFG.subtitle || 'AI assistant') + '</span>',
     '      </div>',
     '    </div>',
     '    <button class="hc-min" type="button" aria-label="Minimise">&minus;</button>',
@@ -89,11 +100,6 @@
 
   shadow.querySelector('.hc-title').textContent = CFG.title || 'Chat with us';
 
-  function escapeAttr(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
 
   function bubble(role, text) {
     var el = document.createElement('div');

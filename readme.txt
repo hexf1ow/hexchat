@@ -4,7 +4,7 @@ Tags: chat, chatbot, ai, openai, assistant
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 0.3.2
+Stable tag: 0.4.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -56,6 +56,13 @@ It says so and offers to hand the question to a person. The system prompt forbid
 Yes, in a local table, with a retention setting (30 days by default) and no raw IP addresses — only a salted hash for rate limiting.
 
 == Changelog ==
+
+= 0.4.0 =
+* Brand colour now actually applies (the base palette no longer overrides it), accepts ff6a00 or #ff6a00, with a live swatch in Settings.
+* New: logo image in the launcher and chat header, with the Hex Flow robot bundled as the default.
+* New: editable header subtitle (the "AI assistant · answers from this site" line).
+* Fix: the transcript retention setting now runs daily; it was never scheduled before.
+* New: choose whether answers read pages, blog posts, or both.
 
 = 0.3.2 =
 * Warmer greetings, scoped to what the business does, how it works and what it costs.
