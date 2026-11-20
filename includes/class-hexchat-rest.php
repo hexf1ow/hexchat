@@ -120,6 +120,44 @@ class HexChat_Rest {
 			return new WP_Error( 'hexchat_config', __( 'This chat is not configured yet — the site owner needs to add an API key.', 'hexchat' ), array( 'status' => 503 ) );
 		}
 
+		/*
+		 * Greetings and thanks are not questions. Sending them to the model means
+		 * a friendly one-line reply that contains almost none of the site's words,
+		 * which the grounding check would then throw away — the visitor sees a
+		 * refusal to "hi". Answer these directly and spend nothing.
+		 */
+		$trimmed = trim( preg_replace( '/\s+/', ' ', $message ) );
+
+		if ( mb_strlen( $trimmed ) <= 40 ) {
+			if ( preg_match( '/^(hi+|hey+|hello+|howdy|yo|gday|g\'day|good\s+(morning|afternoon|evening)|greetings)(\s+(there|everyone|all|team|folks|mate|again|sir|guys))?[\s!.,?]*$/i', $trimmed ) ) {
+				$hello = (string) hexchat_opt( 'greeting_reply' );
+
+				return new WP_REST_Response(
+					array(
+						'session'   => $session,
+						'reply'     => $hello,
+						'sources'   => array(),
+						'escalated' => false,
+						'blocked'   => 'greeting',
+					),
+					200
+				);
+			}
+
+			if ( preg_match( '/^(thanks|thank you|thankyou|cheers|ta|ok thanks|no thanks)\b[\s!.,?]*$/i', $trimmed ) ) {
+				return new WP_REST_Response(
+					array(
+						'session'   => $session,
+						'reply'     => __( 'Any time. If anything else comes up, ask away — or leave your question and the team will pick it up.', 'hexchat' ),
+						'sources'   => array(),
+						'escalated' => false,
+						'blocked'   => 'courtesy',
+					),
+					200
+				);
+			}
+		}
+
 		// Retrieve from this site's own content.
 		$passages = HexChat_Retrieval::search( $message, 4 );
 

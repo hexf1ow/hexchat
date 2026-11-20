@@ -3,7 +3,7 @@
  * Plugin Name:       HexChat
  * Plugin URI:        https://github.com/hexf1ow/hexchat
  * Description:       AI chat widget for WordPress. Free, open source, bring your own API key. Answers from your own site content and hands over to a human when it is unsure.
- * Version:           0.2.2
+ * Version:           0.2.3
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Hex Flow
@@ -18,7 +18,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HEXCHAT_VERSION', '0.2.2' );
+define( 'HEXCHAT_VERSION', '0.2.3' );
 define( 'HEXCHAT_FILE', __FILE__ );
 define( 'HEXCHAT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HEXCHAT_URL', plugin_dir_url( __FILE__ ) );
@@ -51,6 +51,7 @@ function hexchat_defaults() {
 		'greeting'       => 'Hi there 👋 Ask me anything about this site — I answer from its own content.',
 		'system_prompt'  => 'You are a helpful assistant for this website. Answer only from the CONTEXT provided. If the answer is not in the context, say you are not sure and offer to pass the question to a person. Never invent prices, phone numbers, addresses or legal claims. Keep answers under 90 words, plain English, no marketing padding.',
 		'handover_email' => '',
+		'greeting_reply' => 'Hi! Ask me anything about what we do, how it works or what it costs — I answer from this website. If I cannot find it here, I will pass you to the team.',
 		'no_answer_text' => 'I can only answer from what is written on this website, and I could not find anything here about that. I have not passed this to anyone yet — if you leave the question with our team they can help.',
 		'index_types'    => array( 'page', 'post' ),
 		'daily_cap'      => 200,

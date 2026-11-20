@@ -366,6 +366,8 @@ class HexChat_Retrieval {
 					'yes', 'no', 'okay', 'ok', 'sure', 'thanks', 'thank', 'happy', 'help', 'helps', 'happy', 'sorry',
 					'hex', 'flow', 'chat', 'assistant', 'sorry', 'please', 'team', 'person', 'someone', 'question',
 					'answer', 'information', 'details', 'site', 'website', 'page', 'contact', 'email', 'call',
+					'hi', 'hello', 'hey', 'welcome', 'glad', 'able', 'anything', 'else', 'today', 'ask', 'away',
+					'anytime', 'time', 'comes', 'leave', 'pick', 'find', 'found', 'know', 'let', 'use', 'using',
 					'offer', 'offers', 'offerings', 'provide', 'provides', 'service', 'services', 'work', 'works',
 				)
 			)
