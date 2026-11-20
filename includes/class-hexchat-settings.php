@@ -154,6 +154,22 @@ class HexChat_Settings {
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'hexchat' ); ?></p></div>
 			<?php endif; ?>
 
+			<?php
+			$flag      = (string) get_option( 'hexchat_enabled', '1' );
+			$is_shown  = ( '0' !== $flag ) && $has_key;
+			?>
+			<p class="hexchat-hint">
+				<?php
+				if ( $is_shown ) {
+					esc_html_e( 'Widget status: showing on the front end.', 'hexchat' );
+				} elseif ( ! $has_key ) {
+					esc_html_e( 'Widget status: hidden, because no API key is saved.', 'hexchat' );
+				} else {
+					esc_html_e( 'Widget status: hidden, because the widget box below is unticked.', 'hexchat' );
+				}
+				?>
+			</p>
+
 			<?php if ( ! $has_key ) : ?>
 				<div class="notice notice-warning"><p><?php esc_html_e( 'No API key yet — the chat will not answer until you add one below.', 'hexchat' ); ?></p></div>
 			<?php endif; ?>
@@ -228,7 +244,8 @@ class HexChat_Settings {
 					<h2><?php esc_html_e( 'Widget', 'hexchat' ); ?></h2>
 					<div class="hexchat-row">
 						<div class="hexchat-col">
-							<p><label><input type="checkbox" name="hexchat_enabled" value="1" <?php checked( $enabled, 1 ); ?> /> <strong><?php esc_html_e( 'Show the chat widget on the site', 'hexchat' ); ?></strong></label></p>
+							<input type="hidden" name="hexchat_enabled" value="0" />
+							<p><label><input type="checkbox" name="hexchat_enabled" value="1" <?php checked( (string) get_option( 'hexchat_enabled', '1' ), '1' ); ?> /> <strong><?php esc_html_e( 'Show the chat widget on the site', 'hexchat' ); ?></strong></label></p>
 							<label for="hexchat_title"><strong><?php esc_html_e( 'Panel title', 'hexchat' ); ?></strong></label>
 							<input type="text" id="hexchat_title" name="hexchat_title" value="<?php echo esc_attr( hexchat_opt( 'title' ) ); ?>" />
 							<label for="hexchat_greeting"><strong><?php esc_html_e( 'Opening message', 'hexchat' ); ?></strong></label>
