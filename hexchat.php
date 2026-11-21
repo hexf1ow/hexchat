@@ -3,7 +3,7 @@
  * Plugin Name:       HexChat
  * Plugin URI:        https://github.com/hexf1ow/hexchat
  * Description:       AI chat widget for WordPress. Free, open source, bring your own API key. Answers from your own site content and hands over to a human when it is unsure.
- * Version:           0.4.0
+ * Version:           0.4.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Hex Flow
@@ -11,14 +11,13 @@
  * License:           GPL-3.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-3.0.html
  * Text Domain:       hexchat
- * Domain Path:       /languages
  *
  * @package HexChat
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HEXCHAT_VERSION', '0.4.0' );
+define( 'HEXCHAT_VERSION', '0.4.1' );
 define( 'HEXCHAT_FILE', __FILE__ );
 define( 'HEXCHAT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HEXCHAT_URL', plugin_dir_url( __FILE__ ) );
@@ -161,7 +160,6 @@ register_deactivation_hook( __FILE__, 'hexchat_deactivate' );
  * Boot the plugin.
  */
 function hexchat_boot() {
-	load_plugin_textdomain( 'hexchat', false, dirname( plugin_basename( HEXCHAT_FILE ) ) . '/languages' );
 
 	HexChat_Settings::init();
 	HexChat_Rest::init();

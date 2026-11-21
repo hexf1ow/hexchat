@@ -343,7 +343,15 @@ class HexChat_Settings {
 					</tbody>
 				</table>
 			<?php endif; ?>
-			<p class="hexchat-hint"><?php printf( esc_html__( 'Handed to a human: %d times.', 'hexchat' ), (int) HexChat_Store::escalated_count() ); ?></p>
+			<p class="hexchat-hint">
+				<?php
+				printf(
+					/* translators: %d: number of conversations handed to a person. */
+					esc_html__( 'Handed to a human: %d times.', 'hexchat' ),
+					(int) HexChat_Store::escalated_count()
+				);
+				?>
+			</p>
 		</div>
 		<?php
 	}

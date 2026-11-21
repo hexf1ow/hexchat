@@ -2,13 +2,18 @@
 Contributors: hexflow
 Tags: chat, chatbot, ai, openai, assistant
 Requires at least: 6.0
-Tested up to: 6.7
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 An AI chat widget that answers from your own pages. Free, open source, bring your own API key.
+
+== Screenshots ==
+
+1. The chat panel answering a real pricing question from the site's own pages.
+2. The launcher button, branded with your logo and colour.
 
 == Description ==
 
@@ -56,6 +61,9 @@ It says so and offers to hand the question to a person. The system prompt forbid
 Yes, in a local table, with a retention setting (30 days by default) and no raw IP addresses — only a salted hash for rate limiting.
 
 == Changelog ==
+
+= 0.4.1 =
+* Plugin Check clean-up: translators comment, uninstall table name, textdomain loading and Domain Path removed for WordPress.org submission.
 
 = 0.4.0 =
 * Brand colour now actually applies (the base palette no longer overrides it), accepts ff6a00 or #ff6a00, with a live swatch in Settings.

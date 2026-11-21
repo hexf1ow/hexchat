@@ -37,5 +37,4 @@ foreach ( $hexchat_options as $hexchat_option ) {
 	delete_option( $hexchat_option );
 }
 
-$hexchat_table = $wpdb->prefix . 'hexchat_messages';
-$wpdb->query( "DROP TABLE IF EXISTS {$hexchat_table}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'hexchat_messages' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
