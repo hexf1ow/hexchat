@@ -4,7 +4,7 @@ Tags: chat, chatbot, ai, openai, assistant
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.1
+Stable tag: 0.4.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -19,7 +19,7 @@ An AI chat widget that answers from your own pages. Free, open source, bring you
 
 HexChat adds a modern chat widget to your site and answers visitor questions from your own published content.
 
-It is free and it always will be. There is no subscription, no proxy service and no account with us. You paste your own API key — OpenAI, OpenRouter, Groq, Ollama, Anthropic or Gemini — and the plugin talks to that provider directly.
+It is free and it always will be. There is no subscription, no proxy service and no account with us. You paste your own API key — OpenAI, OpenRouter, Groq, Ollama, Anthropic or Gemini — and the plugin talks to that provider directly. On WordPress 7.0 and later you can instead use the site's own AI Client, so no key is needed here at all.
 
 **What it does**
 
@@ -34,6 +34,20 @@ It is free and it always will be. There is no subscription, no proxy service and
 * It does not train any model on your data.
 * It does not send your visitors' questions anywhere except your chosen provider.
 * It does not replace your theme, your forms or your existing plugins.
+
+== External services ==
+
+HexChat talks to one third-party AI provider — the one you select in Settings. Nothing is sent anywhere until a visitor actually sends a message, and only one provider is used at a time.
+
+What is sent, for every provider: the visitor's message, the text of the pages or posts HexChat retrieved to answer it, your system prompt and the model name. No visitor IP address, email address or account details are sent. Your API key is sent to your chosen provider as the authentication header.
+
+* **OpenAI** (`api.openai.com`, or the HTTPS base URL you configure). Used to generate answers when OpenAI is the selected provider. Provided by OpenAI — [terms of use](https://openai.com/policies/terms-of-use/), [privacy policy](https://openai.com/policies/privacy-policy/).
+* **Anthropic** (`api.anthropic.com`). Used to generate answers when Anthropic is the selected provider. Provided by Anthropic — [commercial terms](https://www.anthropic.com/legal/commercial-terms), [privacy policy](https://www.anthropic.com/legal/privacy).
+* **Google Gemini** (`generativelanguage.googleapis.com`). Used to generate answers when Gemini is the selected provider. Provided by Google — [Gemini API terms](https://ai.google.dev/gemini-api/terms), [privacy policy](https://policies.google.com/privacy).
+
+If you point the base URL at a different OpenAI-compatible service (OpenRouter, Groq, Ollama, LM Studio), that service becomes the recipient and its own terms and privacy policy apply.
+
+HexChat does not contact any server operated by the plugin author, and collects no analytics or telemetry.
 
 == Installation ==
 
@@ -61,6 +75,12 @@ It says so and offers to hand the question to a person. The system prompt forbid
 Yes, in a local table, with a retention setting (30 days by default) and no raw IP addresses — only a salted hash for rate limiting.
 
 == Changelog ==
+
+= 0.4.2 =
+* Review fixes. The admin colour swatch is enqueued with `wp_add_inline_script()` instead of being printed as a `<script>` tag.
+* Settings sanitisation: URLs use `esc_url_raw`, the handover email uses `sanitize_email`, the system prompt uses `sanitize_textarea_field`, and provider and position are validated against their allowed values.
+* New: "WordPress AI Client (7.0+)" provider. On WordPress 7.0 and later the plugin uses the site's own configured AI provider, so no API key is needed in HexChat.
+* readme: new External services section naming OpenAI, Anthropic and Google Gemini, with what is sent, when, and links to their terms and privacy policies.
 
 = 0.4.1 =
 * Plugin Check clean-up: translators comment, uninstall table name, textdomain loading and Domain Path removed for WordPress.org submission.

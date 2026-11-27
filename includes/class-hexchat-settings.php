@@ -60,6 +60,20 @@ class HexChat_Settings {
 		wp_register_style( 'hexchat-admin', false, array(), HEXCHAT_VERSION );
 		wp_enqueue_style( 'hexchat-admin' );
 		wp_add_inline_style( 'hexchat-admin', $css );
+
+		// The colour swatch preview. Enqueued as an inline script rather than printed
+		// as a raw script tag, so WordPress loads it in the footer and it stays
+		// compatible with script concatenation and CSP.
+		$js = "(function(){var i=document.getElementById('hexchat_brand_colour'),s=document.getElementById('hexchat-colour-swatch');"
+			. "if(!i||!s){return;}"
+			. "function u(){var v=(i.value||'').trim();if(!v){s.style.background='#1f3864';return;}"
+			. "if(v.charAt(0)!=='#'){v='#'+v;}"
+			. "if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)){s.style.background=v;}}"
+			. "i.addEventListener('input',u);i.addEventListener('change',u);})();";
+
+		wp_register_script( 'hexchat-admin', false, array(), HEXCHAT_VERSION, true );
+		wp_enqueue_script( 'hexchat-admin' );
+		wp_add_inline_script( 'hexchat-admin', $js );
 	}
 
 	/**
@@ -70,8 +84,8 @@ class HexChat_Settings {
 	public static function register() {
 		$fields = array(
 			'enabled'        => 'int',
-			'provider'       => 'text',
-			'base_url'       => 'text',
+			'provider'       => 'provider',
+			'base_url'       => 'url',
 			'model'          => 'text',
 			'temperature'    => 'float',
 			'max_tokens'     => 'int',
@@ -80,14 +94,14 @@ class HexChat_Settings {
 			'daily_cap'      => 'int',
 			'greeting'       => 'text',
 			'title'          => 'text',
-			'system_prompt'  => 'text',
-			'handover_email' => 'text',
+			'system_prompt'  => 'textarea',
+			'handover_email' => 'email',
 			'index_types'    => 'array',
 			'retention_days' => 'int',
 			'brand_colour'   => 'colour',
-			'position'       => 'text',
+			'position'       => 'position',
 			'strict_wall'    => 'int',
-			'logo_url'       => 'text',
+			'logo_url'       => 'url',
 			'subtitle'       => 'text',
 		);
 
@@ -101,6 +115,22 @@ class HexChat_Settings {
 				};
 			} elseif ( 'colour' === $type ) {
 				$callback = 'hexchat_normalise_colour';
+			} elseif ( 'url' === $type ) {
+				// The API base and logo URLs: keep them absolute and http(s) only.
+				$callback = 'esc_url_raw';
+			} elseif ( 'email' === $type ) {
+				$callback = 'sanitize_email';
+			} elseif ( 'textarea' === $type ) {
+				$callback = 'sanitize_textarea_field';
+			} elseif ( 'provider' === $type ) {
+				$callback = static function ( $value ) {
+					$value = sanitize_key( (string) $value );
+					return in_array( $value, array( 'openai', 'anthropic', 'gemini', 'wordpress' ), true ) ? $value : 'openai';
+				};
+			} elseif ( 'position' === $type ) {
+				$callback = static function ( $value ) {
+					return ( 'left' === $value ) ? 'left' : 'right';
+				};
 			} elseif ( 'array' === $type ) {
 				$callback = static function ( $value ) {
 					return array_values( array_intersect( array_map( 'sanitize_key', (array) $value ), array( 'page', 'post' ) ) );
@@ -191,6 +221,7 @@ class HexChat_Settings {
 								<option value="openai" <?php selected( $provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI-compatible', 'hexchat' ); ?></option>
 								<option value="anthropic" <?php selected( $provider, 'anthropic' ); ?>><?php esc_html_e( 'Anthropic', 'hexchat' ); ?></option>
 								<option value="gemini" <?php selected( $provider, 'gemini' ); ?>><?php esc_html_e( 'Google Gemini', 'hexchat' ); ?></option>
+								<option value="wordpress" <?php selected( $provider, 'wordpress' ); ?>><?php esc_html_e( 'WordPress AI Client (7.0+)', 'hexchat' ); ?></option>
 							</select>
 							<p class="hexchat-hint"><?php esc_html_e( 'OpenAI-compatible also covers OpenRouter, Groq, Ollama, LM Studio and vLLM.', 'hexchat' ); ?></p>
 						</div>
@@ -266,11 +297,6 @@ class HexChat_Settings {
 							<input type="text" id="hexchat_brand_colour" name="hexchat_brand_colour" value="<?php echo esc_attr( hexchat_opt( 'brand_colour' ) ); ?>" placeholder="#ff6a00" />
 							<span id="hexchat-colour-swatch" style="display:inline-block;width:26px;height:26px;border-radius:6px;border:1px solid #c3c4c7;vertical-align:middle;background:<?php echo esc_attr( hexchat_normalise_colour( (string) hexchat_opt( 'brand_colour' ) ) ? hexchat_normalise_colour( (string) hexchat_opt( 'brand_colour' ) ) : '#1f3864' ); ?>"></span>
 							<p class="hexchat-hint"><?php esc_html_e( 'Hex value with or without the # — ff6a00, #ff6a00 and #f60 all work. Leave empty for the default navy.', 'hexchat' ); ?></p>
-							<script>
-							(function(){var i=document.getElementById('hexchat_brand_colour'),s=document.getElementById('hexchat-colour-swatch');
-							function u(){var v=(i.value||'').trim();if(!v){s.style.background='#1f3864';return;}if(v.charAt(0)!=='#')v='#'+v;if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)){s.style.background=v;}}
-							i.addEventListener('input',u);i.addEventListener('change',u);})();
-							</script>
 						</div>
 					</div>
 				</div>

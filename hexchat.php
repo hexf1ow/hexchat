@@ -3,7 +3,7 @@
  * Plugin Name:       HexChat
  * Plugin URI:        https://github.com/hexf1ow/hexchat
  * Description:       AI chat widget for WordPress. Free, open source, bring your own API key. Answers from your own site content and hands over to a human when it is unsure.
- * Version:           0.4.1
+ * Version:           0.4.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Hex Flow
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HEXCHAT_VERSION', '0.4.1' );
+define( 'HEXCHAT_VERSION', '0.4.2' );
 define( 'HEXCHAT_FILE', __FILE__ );
 define( 'HEXCHAT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HEXCHAT_URL', plugin_dir_url( __FILE__ ) );
@@ -29,6 +29,7 @@ require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider.php';
 require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-openai.php';
 require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-anthropic.php';
 require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-gemini.php';
+require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-wp.php';
 require_once HEXCHAT_DIR . 'includes/class-hexchat-settings.php';
 require_once HEXCHAT_DIR . 'includes/class-hexchat-rest.php';
 
@@ -111,11 +112,13 @@ function hexchat_provider() {
 	$base_url = (string) hexchat_opt( 'base_url' );
 	$model    = (string) hexchat_opt( 'model' );
 
-	if ( '' === $key ) {
+	if ( '' === $key && 'wordpress' !== hexchat_opt( 'provider' ) ) {
 		return new WP_Error( 'hexchat_no_key', __( 'No API key saved yet.', 'hexchat' ) );
 	}
 
 	switch ( hexchat_opt( 'provider' ) ) {
+		case 'wordpress':
+			return new HexChat_Provider_WP( $key, $model, $base_url );
 		case 'anthropic':
 			return new HexChat_Provider_Anthropic( $key, $model, $base_url );
 		case 'gemini':
@@ -176,7 +179,8 @@ function hexchat_boot() {
 	// and a key is saved. An empty/missing value means "on", because WordPress
 	// writes an empty string for any registered option absent from a saved form.
 	$hexchat_flag = get_option( 'hexchat_enabled', '1' );
-	if ( '0' !== (string) $hexchat_flag && HexChat_Crypto::has_api_key() ) {
+	$hexchat_ready = HexChat_Crypto::has_api_key() || 'wordpress' === hexchat_opt( 'provider' );
+	if ( '0' !== (string) $hexchat_flag && $hexchat_ready ) {
 		add_action( 'wp_enqueue_scripts', 'hexchat_enqueue_widget' );
 		add_action( 'wp_footer', 'hexchat_render_mount' );
 	}
