@@ -4,7 +4,7 @@ Tags: chat, chatbot, ai, openai, assistant
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.2
+Stable tag: 0.5.0
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -26,6 +26,7 @@ It is free and it always will be. There is no subscription, no proxy service and
 * A clean, mobile-first chat widget that loads in a shadow root, so your theme cannot break it.
 * Answers grounded in your own pages and posts. No content, no answer — it says so instead of inventing one.
 * Hands over to a human, by email, when it is not confident.
+* Saves every conversation in your own database, with a transcript screen and a client list — no third-party inbox, no data leaving your site.
 * Your API key is stored encrypted with your site's own secret and is never sent to the browser.
 * Rate limits and a daily cap protect your API bill.
 
@@ -76,7 +77,14 @@ Yes, in a local table, with a retention setting (30 days by default) and no raw 
 
 == Changelog ==
 
-= 0.4.2 =
+= 0.5.0 =
+* New: conversations are saved and grouped. A new HexChat menu lists every chat with its date, a one-line summary, the client, the status and the message count.
+* New: open any conversation to read the full transcript, including which pages answered each reply.
+* New: clients. An email address or Australian phone number typed into the chat is captured as a client record on a separate Clients screen. Nothing is captured unless the visitor types one.
+* New: status per conversation — AI handling, Needs human, Claimed, Answered. A conversation flips to Needs human automatically when the assistant hands over.
+* Retention now applies to conversations and clients as well as messages, on the same daily clean-up.
+* Upgrade path: the new tables are created on upgrade, not only on activation.
+
 * Review fixes. The admin colour swatch is enqueued with `wp_add_inline_script()` instead of being printed as a `<script>` tag.
 * Settings sanitisation: URLs use `esc_url_raw`, the handover email uses `sanitize_email`, the system prompt uses `sanitize_textarea_field`, and provider and position are validated against their allowed values.
 * New: "WordPress AI Client (7.0+)" provider. On WordPress 7.0 and later the plugin uses the site's own configured AI provider, so no API key is needed in HexChat.

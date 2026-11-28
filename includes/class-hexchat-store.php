@@ -61,19 +61,35 @@ class HexChat_Store {
 
 		$table = $wpdb->prefix . self::TABLE;
 
+		$role      = ( 'assistant' === $row['role'] ) ? 'assistant' : 'user';
+		$escalated = empty( $row['escalated'] ) ? 0 : 1;
+
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$table,
 			array(
 				'session_key' => substr( (string) $row['session_key'], 0, 64 ),
-				'role'        => ( 'assistant' === $row['role'] ) ? 'assistant' : 'user',
+				'role'        => $role,
 				'message'     => (string) $row['message'],
 				'sources'     => isset( $row['sources'] ) ? wp_json_encode( $row['sources'] ) : null,
-				'escalated'   => empty( $row['escalated'] ) ? 0 : 1,
+				'escalated'   => $escalated,
 				'ip_hash'     => isset( $row['ip_hash'] ) ? substr( (string) $row['ip_hash'], 0, 64 ) : null,
 				'created_at'  => current_time( 'mysql', true ),
 			),
 			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
 		);
+
+		// Keep the conversation roll-up in step. Done here rather than in the REST
+		// handler so every path that stores a message — including refusals and
+		// provider errors — produces a readable conversation.
+		if ( class_exists( 'HexChat_Conversations' ) ) {
+			HexChat_Conversations::touch(
+				substr( (string) $row['session_key'], 0, 64 ),
+				$role,
+				(string) $row['message'],
+				isset( $row['ip_hash'] ) ? (string) $row['ip_hash'] : '',
+				(bool) $escalated
+			);
+		}
 	}
 
 	/**

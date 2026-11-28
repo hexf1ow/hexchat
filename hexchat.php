@@ -3,7 +3,7 @@
  * Plugin Name:       HexChat
  * Plugin URI:        https://github.com/hexf1ow/hexchat
  * Description:       AI chat widget for WordPress. Free, open source, bring your own API key. Answers from your own site content and hands over to a human when it is unsure.
- * Version:           0.4.2
+ * Version:           0.5.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Hex Flow
@@ -17,13 +17,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HEXCHAT_VERSION', '0.4.2' );
+define( 'HEXCHAT_VERSION', '0.5.0' );
 define( 'HEXCHAT_FILE', __FILE__ );
 define( 'HEXCHAT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HEXCHAT_URL', plugin_dir_url( __FILE__ ) );
 
 require_once HEXCHAT_DIR . 'includes/class-hexchat-crypto.php';
 require_once HEXCHAT_DIR . 'includes/class-hexchat-store.php';
+require_once HEXCHAT_DIR . 'includes/class-hexchat-conversations.php';
 require_once HEXCHAT_DIR . 'includes/class-hexchat-retrieval.php';
 require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider.php';
 require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-openai.php';
@@ -31,6 +32,7 @@ require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-anthropic.
 require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-gemini.php';
 require_once HEXCHAT_DIR . 'includes/providers/class-hexchat-provider-wp.php';
 require_once HEXCHAT_DIR . 'includes/class-hexchat-settings.php';
+require_once HEXCHAT_DIR . 'includes/class-hexchat-admin.php';
 require_once HEXCHAT_DIR . 'includes/class-hexchat-rest.php';
 
 /**
@@ -133,6 +135,7 @@ function hexchat_provider() {
  */
 function hexchat_activate() {
 	HexChat_Store::install();
+	HexChat_Conversations::install();
 
 	foreach ( hexchat_defaults() as $key => $value ) {
 		if ( false === get_option( 'hexchat_' . $key, false ) ) {
@@ -166,6 +169,11 @@ function hexchat_boot() {
 
 	HexChat_Settings::init();
 	HexChat_Rest::init();
+	HexChat_Admin::init();
+
+	// An update never runs the activation hook, so create the conversation
+	// tables here when the stored schema version is behind.
+	HexChat_Conversations::maybe_install();
 
 	add_action( 'hexchat_prune', 'hexchat_run_prune' );
 
@@ -219,6 +227,7 @@ function hexchat_normalise_colour( $value ) {
  */
 function hexchat_run_prune() {
 	HexChat_Store::prune();
+	HexChat_Conversations::prune();
 }
 
 function hexchat_enqueue_widget() {
